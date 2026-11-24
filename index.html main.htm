@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#02080f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>J.A.R.V.I.S</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600&display=swap">
+<style>
+:root{--bg:#02080f;--ink:#d8f6ff;--dim:#6f9bb0;--cy:#38e8ff;--cyr:56,232,255;--line:rgba(var(--cyr),.28);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(circle at 50% 40%,rgba(var(--cyr),.16) 0,var(--bg) 65%);color:var(--ink);font:600 17px/1.3 "Rajdhani",ui-sans-serif,system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(var(--cyr),.04) 0 1px,transparent 1px 4px)}
+main{height:100%;display:flex;flex-direction:column;padding:12px 16px 14px;max-width:560px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:"Orbitron",ui-sans-serif,sans-serif}
+h1{margin:0;font-size:14px;letter-spacing:.26em;font-weight:700;color:var(--cy)}
+#status{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:7px}
+#dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+body[data-s=listening] #dot{background:#3dff9a;box-shadow:0 0 10px #3dff9a}
+body[data-s=speaking] #dot{background:var(--cy);box-shadow:0 0 10px var(--cy)}
+body[data-s=thinking] #dot{background:#ffc247;box-shadow:0 0 10px #ffc247}
+#tools{display:flex;gap:8px;overflow-x:auto;padding:8px 0 0;scrollbar-width:none}
+#tools::-webkit-scrollbar{display:none}
+button.sm.on{background:var(--cy);color:var(--bg);border-color:var(--cy)}
+#log{display:none;flex:1;min-height:0;overflow-y:auto;flex-direction:column;gap:8px;padding:10px 2px}
+body.chat #log{display:flex}
+body.chat .stage,body.chat #out,body.chat #chips,body.chat #hud{display:none}
+.msg{max-width:86%;padding:9px 14px;border-radius:14px;font-size:18px;line-height:1.3;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:rgba(var(--cyr),.16);border:1px solid var(--line)}
+.msg.ai{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.msg a{color:var(--cy)}
+#send{flex:none;width:52px;height:52px;border-radius:50%;border:1px solid var(--cy);background:var(--cy);color:var(--bg);display:grid;place-items:center}
+#send svg{width:22px;height:22px}
+#hud{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+#clock{display:block;font:700 26px "Orbitron",ui-sans-serif,sans-serif;color:var(--cy);text-shadow:0 0 12px rgba(var(--cyr),.6)}
+#date{color:var(--dim);font-size:14px}
+.r{display:flex;flex-direction:column;text-align:right;font-size:14px;color:var(--dim)}
+.stage{flex:1;min-height:0;margin:8px 0;display:grid;place-items:center;background:
+linear-gradient(var(--cy),var(--cy)) 0 0/22px 2px,linear-gradient(var(--cy),var(--cy)) 0 0/2px 22px,
+linear-gradient(var(--cy),var(--cy)) 100% 0/22px 2px,linear-gradient(var(--cy),var(--cy)) 100% 0/2px 22px,
+linear-gradient(var(--cy),var(--cy)) 0 100%/22px 2px,linear-gradient(var(--cy),var(--cy)) 0 100%/2px 22px,
+linear-gradient(var(--cy),var(--cy)) 100% 100%/22px 2px,linear-gradient(var(--cy),var(--cy)) 100% 100%/2px 22px;background-repeat:no-repeat}
+canvas{width:min(80vw,38vh);height:min(80vw,38vh);cursor:pointer;touch-action:manipulation}
+#out{min-height:96px;max-height:24vh;overflow-y:auto;text-align:center;padding:2px 6px}
+#heard{margin:0 0 4px;color:var(--dim);font-size:15px;min-height:20px}
+#reply{margin:0;font-size:21px;line-height:1.25}
+#link{display:none;margin-top:8px;padding:7px 18px;border:1px solid var(--cy);border-radius:999px;color:var(--cy);text-decoration:none;font-size:16px}
+#chips{display:flex;gap:8px;overflow-x:auto;padding:8px 0 10px;scrollbar-width:none}
+#chips::-webkit-scrollbar{display:none}
+.chip,button.sm{flex:none;border:1px solid var(--line);background:rgba(var(--cyr),.06);color:var(--ink);padding:7px 14px;border-radius:999px;font:inherit;font-size:15px}
+.bar{display:flex;gap:10px;align-items:center}
+#txt{flex:1;min-width:0;height:52px;border:1px solid var(--line);background:rgba(3,11,20,.8);color:var(--ink);border-radius:26px;padding:0 20px;font:inherit;font-size:18px;outline:none}
+#txt::placeholder{color:var(--dim)}
+:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+#mic{flex:none;width:62px;height:62px;border-radius:50%;border:2px solid var(--cy);background:rgba(var(--cyr),.1);color:var(--cy);display:grid;place-items:center;box-shadow:0 0 22px rgba(var(--cyr),.3)}
+body[data-s=listening] #mic{background:var(--cy);color:var(--bg)}
+#mic svg{width:28px;height:28px}
+#boot{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 12vw;gap:14px;transition:opacity .9s}
+#boot.off{opacity:0;pointer-events:none}
+#bl{font:500 14px/1.9 "Orbitron",ui-sans-serif,sans-serif;color:var(--cy);min-height:150px}
+#go{border:2px solid var(--cy);background:transparent;color:var(--cy);font:700 15px "Orbitron",ui-sans-serif,sans-serif;letter-spacing:.2em;padding:14px 26px;border-radius:4px;box-shadow:0 0 20px rgba(var(--cyr),.35)}
+#sheet,#hsheet{position:fixed;inset:0;z-index:15;background:rgba(2,8,15,.88);display:none;align-items:center;justify-content:center;padding:16px}
+#sheet.on,#hsheet.on{display:flex}
+.card{width:100%;max-width:460px;max-height:100%;overflow-y:auto;border:1px solid var(--line);background:#06141f;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.card h2{margin:0;font:700 15px "Orbitron",ui-sans-serif,sans-serif;color:var(--cy)}
+.card label{display:flex;flex-direction:column;gap:5px;color:var(--dim);font-size:15px}
+.card input,.card select,.card textarea{background:#030b14;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px;font:inherit;font-size:16px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button.pri{background:var(--cy);color:var(--bg);border-color:var(--cy)}
+#cam{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(var(--cyr),.08);color:var(--cy);display:grid;place-items:center}
+#cam svg{width:22px;height:22px}#cam.on{background:var(--cy);color:var(--bg)}
+.swb{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.6);padding:0}
+#hl{display:flex;flex-direction:column;gap:6px;max-height:45vh;overflow-y:auto;color:var(--dim)}
+.hi{display:flex;gap:6px}.hb{flex:1;min-width:0;text-align:left;border:1px solid var(--line);background:rgba(var(--cyr),.06);color:var(--ink);border-radius:10px;padding:9px 12px;font:inherit;font-size:16px}
+.hx{flex:none;width:42px;border:1px solid var(--line);background:transparent;color:var(--dim);border-radius:10px;font-size:16px}
+.msg .katex-display{overflow-x:auto;overflow-y:hidden}
+</style>
+</head>
+<body data-s="idle">
+<main>
+  <header><h1>J.A.R.V.I.S</h1><div id="status"><span id="dot"></span><span id="st">Standing by</span></div></header>
+  <div id="tools"><button id="wk" class="sm">Wake: off</button><button id="chat" class="sm">Chat</button><button id="mute" class="sm">Voice: on</button><button id="hbtn" class="sm">History</button><button id="gear" class="sm">Settings</button></div>
+  <div id="hud"><div><b id="clock">--:--</b><span id="date"></span></div><div class="r"><span id="bat">Battery –</span><span id="net">Network –</span><span id="wx">Weather –</span></div></div>
+  <div class="stage"><canvas id="orb" aria-label="Tap to speak"></canvas></div>
+  <div id="log"></div>
+  <section id="out" aria-live="polite"><p id="heard"></p><p id="reply">Tap the orb and speak.</p><a id="link" target="_blank" rel="noopener"></a></section>
+  <div id="chips"></div>
+  <div class="bar">
+    <button id="cam" aria-label="Attach photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button><input id="file" type="file" accept="image/*" hidden>
+    <input id="txt" type="text" placeholder="Or type a command" autocomplete="off" enterkeyhint="send" aria-label="Type a command">
+    <button id="send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button>
+    <button id="mic" aria-label="Speak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  </div>
+</main>
+
+<div id="boot"><div id="bl"></div><button id="go">Initialize</button></div>
+
+<div id="hsheet"><div class="card"><h2>Chat history</h2><input id="hq" type="text" placeholder="Search your chats" autocomplete="off"><div id="hl"></div><div class="row"><button id="hnew" class="sm pri">New chat</button><button id="hexp" class="sm">Export all</button><button id="hdel" class="sm">Delete all</button><button id="hcls" class="sm">Close</button></div></div></div>
+<div id="sheet"><div class="card">
+  <h2>Settings</h2>
+  <label>AI key (Gemini AIza… or OpenAI sk-…)<input id="k" type="password" autocomplete="off"></label>
+  <label>Orb colour</label><div class="row" id="sw"></div>
+  <label>Study mode (JEE solver)<select id="study"><option value="auto">Auto</option><option value="on">Always on</option><option value="off">Off</option></select></label>
+  <label>Model (optional)<input id="mdl" type="text" placeholder="gemini-3.5-flash or gpt-4o-mini" autocomplete="off"></label>
+  <label>Custom apps (one per line: name = com.package.name or scheme://)<textarea id="apps" rows="3" placeholder="notes = com.google.android.keep"></textarea></label>
+  <label>Voice<select id="v"></select></label>
+  <label>Pitch<input id="p" type="range" min=".5" max="1.5" step=".05"></label>
+  <label>Speed<input id="s" type="range" min=".7" max="1.3" step=".05"></label>
+  <label>Personality (paste your ChatGPT summary)<textarea id="pers" rows="4"></textarea></label>
+  <div class="row"><button id="exp" class="sm">Export memory</button><button id="imp" class="sm">Import memory</button><button id="clr" class="sm">Clear memory</button></div>
+  <div class="row"><button id="save" class="sm pri">Save</button><button id="cls" class="sm">Close</button></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let cfg=Object.assign({key:"",model:"",apps:"",mute:false,theme:"cyan",study:"auto",voice:"",pitch:.75,rate:1,pers:""},ls.get("jv_cfg",{}));
+let mem=ls.get("jv_mem",[]),hist=ls.get("jv_hist",[]);
+let chats=ls.get("jv_chats",[]),cur=null,pending=null;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const NATIVE=!!window.JarvisNative;let spokeCb=null;
+const THEMES={cyan:[56,232,255],gold:[255,196,61],red:[255,70,70],purple:[170,115,255],green:[61,255,154],pink:[255,100,190],orange:[255,140,45]};
+function setAccent(c){const r=document.documentElement.style;r.setProperty("--cy","rgb("+c+")");r.setProperty("--cyr",c.join(","))}
+function applyTheme(){if(cfg.theme!=="auto")setAccent(THEMES[cfg.theme]||THEMES.cyan)}
+function hsl(h){const f=n=>{const k=(n+h/30)%12;return Math.round(255*(.58-.42*Math.max(-1,Math.min(k-3,9-k,1))))};return [f(0),f(8),f(4)]}
+
+/* sound */
+let ac;
+function beep(f,d,v,type,at){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+(at||0);o.type=type||"sine";o.frequency.setValueAtTime(f,s);g.gain.setValueAtTime(v||.05,s);g.gain.exponentialRampToValueAtTime(.0001,s+d);o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d)}catch(e){}}
+const sfx={on(){beep(520,.08);beep(780,.1,.05,"sine",.09)},think(){beep(330,.06,.04,"triangle")},rep(){beep(880,.07,.04)},boot(){[300,450,600,900,1200].forEach((f,i)=>beep(f,.14,.05,"sine",i*.45))}};
+
+/* orb */
+const cv=$("orb"),ctx=cv.getContext("2d");
+let W,H,state="idle",lvl=0,t=0,pw=0,pwT=0,CUR="56,232,255";
+const P=Array.from({length:46},()=>({a:Math.random()*6.28,r:.2+Math.random()*.8,sp:(Math.random()*.006+.002)*(Math.random()<.5?-1:1),z:Math.random()*1.6+.6}));
+function size(){const d=Math.min(devicePixelRatio||1,1.5),r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
+addEventListener("resize",size);size();
+function ring(cx,cy,r,rot,dash,w,a){ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.beginPath();ctx.arc(0,0,r,0,6.2832);ctx.setLineDash(dash);ctx.lineWidth=w;ctx.strokeStyle="rgba("+CUR+","+a+")";ctx.stroke();ctx.restore()}
+function poly(cx,cy,r,n,rot,w,a){ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.beginPath();for(let i=0;i<n;i++){const x=Math.cos(i/n*6.2832)*r,y=Math.sin(i/n*6.2832)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.closePath();ctx.setLineDash([]);ctx.lineWidth=w;ctx.strokeStyle="rgba("+CUR+","+a+")";ctx.stroke();ctx.restore()}
+const NP=70,SP=Array.from({length:NP},(_,i)=>{const y=1-2*(i+.5)/NP,r=Math.sqrt(1-y*y),a=i*2.39996;return{x:Math.cos(a)*r,y,z:Math.sin(a)*r}});
+let waves=[],wt=0;
+function bolt(cx,cy,R,C,al){
+  const ang=Math.random()*6.2832,x1=cx+Math.cos(ang)*R*.75,y1=cy+Math.sin(ang)*R*.75;
+  ctx.beginPath();ctx.moveTo(cx,cy);
+  for(let i=1;i<=7;i++){const f=i/7,j=(1-f)*R*.14;ctx.lineTo(cx+(x1-cx)*f+(Math.random()-.5)*j*2,cy+(y1-cy)*f+(Math.random()-.5)*j*2)}
+  ctx.setLineDash([]);ctx.lineWidth=5;ctx.strokeStyle="rgba("+C+","+al*.25+")";ctx.stroke();ctx.lineWidth=1.6;ctx.strokeStyle="rgba(215,252,255,"+al+")";ctx.stroke();
+}
+let lastF=0;
+function draw(ts){
+  requestAnimationFrame(draw);
+  if(document.hidden||ts-lastF<32)return;lastF=ts;
+  t+=.032;pw+=(pwT-pw)*.035;
+  const idle=.16+Math.sin(t*1.6)*.06;
+  const tg=state==="listening"?.45+Math.random()*.55:state==="speaking"?.35+Math.random()*.65:state==="thinking"?.55+Math.sin(t*9)*.2:idle;
+  lvl+=(tg-lvl)*.12;
+  const rgb=cfg.theme==="auto"?hsl((t*18)%360):(THEMES[cfg.theme]||THEMES.cyan);const C=rgb.join(",");CUR=C;if(cfg.theme==="auto"&&((t*30)|0)%9===0)setAccent(rgb);
+  ctx.clearRect(0,0,W,H);ctx.globalAlpha=pw;
+  const cx=W/2,cy=H/2,R=(Math.min(W,H)/2-4)*(.7+.3*pw)*(1+Math.sin(t*1.5)*.012),k=1+lvl*1.5;
+  /* plasma core */
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,R*.55);
+  g.addColorStop(0,"rgba(255,255,255,"+(.85+lvl*.15)+")");g.addColorStop(.25,"rgba("+C+","+(.55+lvl*.3)+")");g.addColorStop(1,"rgba("+C+",0)");
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,R*(.5+lvl*.18),0,7);ctx.fill();
+  /* shockwaves */
+  wt+=.032;if(wt>(state==="idle"?2.6:.5)){wt=0;waves.push({r:R*.3,a:.7})}
+  waves=waves.filter(w=>w.a>.03&&w.r<R*1.05);ctx.setLineDash([]);
+  for(const w of waves){w.r+=R*.012*(1+lvl*2);w.a*=.965;ctx.beginPath();ctx.arc(cx,cy,w.r,0,6.2832);ctx.lineWidth=2;ctx.strokeStyle="rgba("+C+","+w.a+")";ctx.stroke()}
+  /* 3D particle sphere */
+  const ry=t*.5*k,rx=.45+Math.sin(t*.3)*.25,cY=Math.cos(ry),sY=Math.sin(ry),cX=Math.cos(rx),sX=Math.sin(rx);
+  const pts=SP.map((p,i)=>{
+    const d=1+lvl*.28*Math.sin(i*3.1+t*8),x=p.x*d,y=p.y*d,z=p.z*d;
+    const x1=x*cY+z*sY,z1=-x*sY+z*cY,y1=y*cX-z1*sX,z2=y*sX+z1*cX,s=1.6/(1.6-z2*.35);
+    return{x:cx+x1*R*.6*s,y:cy+y1*R*.6*s,z:z2};
+  });
+  ctx.beginPath();const md=R*.3,m2=md*md;
+  for(let i=0;i<NP;i++)for(let j=i+1;j<NP;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y;if(dx*dx+dy*dy<m2){ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y)}}
+  ctx.lineWidth=.7;ctx.strokeStyle="rgba("+C+",.28)";ctx.stroke();
+  for(const q of pts){const f=(q.z+1)/2;ctx.fillStyle="rgba("+C+","+(.25+.75*f)+")";ctx.beginPath();ctx.arc(q.x,q.y,1+f*1.8,0,7);ctx.fill()}
+  /* electron orbits */
+  for(let j=0;j<3;j++){
+    const rot=j*1.0472+t*.35*k*(j%2?-1:1),mn=R*.96*(.28+j*.2+Math.sin(t*.6+j)*.05);
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);
+    ctx.beginPath();ctx.ellipse(0,0,R*.96,mn,0,0,6.2832);ctx.setLineDash([]);ctx.lineWidth=1.2;ctx.strokeStyle="rgba("+C+",.45)";ctx.stroke();
+    const a=t*(1.8+j*.7)*k,ex=Math.cos(a)*R*.96,ey=Math.sin(a)*mn;ctx.fillStyle="rgba("+C+",.3)";ctx.beginPath();ctx.arc(ex,ey,8,0,7);ctx.fill();ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(ex,ey,3.6,0,7);ctx.fill();ctx.restore();
+  }
+  ring(cx,cy,R*.99,-t*.3*k,[R*.5,R*.2,10,R*.3],2,.6);
+  /* lightning */
+  if(lvl>.45||Math.random()<.02){const n=state==="idle"?1:3;for(let i=0;i<n;i++)bolt(cx,cy,R,C,.35+Math.random()*.5)}
+  ctx.globalAlpha=1;
+}
+requestAnimationFrame(draw);
+
+const LABEL={idle:"Standing by",listening:"Listening…",thinking:"Processing",speaking:"Speaking"};
+function setState(s){if(s===state)return;state=s;document.body.dataset.s=s;$("st").textContent=LABEL[s];if(s==="listening")sfx.on();if(s==="thinking")sfx.think()}
+
+/* voice + text */
+let voice=null;
+function pick(){const v=speechSynthesis.getVoices();voice=v.find(x=>/en[-_](GB|IN)/i.test(x.lang)&&/male|daniel|ravi/i.test(x.name))||v.find(x=>/en[-_]GB/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null}
+try{pick();speechSynthesis.onvoiceschanged=pick}catch(e){}
+function speak(text,cb){
+  stopWake();
+  if(cfg.mute){setState("idle");cb&&cb();return}
+  if(NATIVE){spokeCb=cb||null;setState("speaking");try{JarvisNative.speak(text,cfg.pitch,cfg.rate)}catch(e){setState("idle");cb&&cb()}return}
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.pitch=cfg.pitch;u.rate=cfg.rate;
+    const v=speechSynthesis.getVoices().find(x=>x.name===cfg.voice)||voice;if(v)u.voice=v;
+    u.onstart=()=>setState("speaking");u.onend=u.onerror=()=>{setState("idle");cb&&cb()};speechSynthesis.speak(u)}catch(e){setState("idle");cb&&cb()}
+}
+let tw;
+function typeIn(el,text){clearInterval(tw);el.textContent="";let i=0;const st=Math.max(1,Math.ceil(text.length/90));tw=setInterval(()=>{i+=st;el.textContent=text.slice(0,i);if(i>=text.length)clearInterval(tw)},28)}
+function bubble(who,text,o){
+  const d=document.createElement("div");d.className="msg "+who;d.textContent=text;
+  if(o&&o.u){d.appendChild(document.createElement("br"));const a=document.createElement("a");a.href=o.u;a.textContent=o.l;a.target=/^https?:/.test(o.u)?"_blank":"_self";d.appendChild(a)}
+  $("log").appendChild(d);
+  if(who==="ai"&&window.renderMathInElement){try{renderMathInElement(d,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"$",right:"$",display:false},{left:"\\(",right:"\\)",display:false}],throwOnError:false})}catch(e){}}
+  $("log").scrollTop=1e9;
+}
+function addMsg(who,text,o){
+  bubble(who,text,o);
+  if(!cur)newChat();
+  if(!chats.includes(cur))chats.unshift(cur);
+  cur.msgs.push({r:who,t:String(text).slice(0,6000)});
+  if(who==="me"&&cur.title==="New chat")cur.title=String(text).slice(0,40);
+  cur.ts=Date.now();saveChats();
+}
+function say(r,cb){
+  const o=typeof r==="string"?{t:r}:r,a=$("link"),sp=o.s||o.t;
+  typeIn($("reply"),o.study?sp:o.t);sfx.rep();addMsg("ai",o.t,o);
+  if(o.study){document.body.classList.add("chat");paint()}
+  if(o.u){a.href=o.u;a.target=/^https?:/.test(o.u)?"_blank":"_self";a.textContent=o.l;a.style.display="inline-block"}else a.style.display="none";
+  if(o.u&&o.go){try{(NATIVE||!/^https?:/.test(o.u))?location.href=o.u:window.open(o.u,"_blank","noopener")}catch(e){}}
+  speak(sp,cb);
+}
+
+/* brain */
+const ANDROID=/android/i.test(navigator.userAgent),IOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+const APPS={
+whatsapp:["com.whatsapp","whatsapp://","https://wa.me/"],instagram:["com.instagram.android","instagram://app","https://www.instagram.com"],
+youtube:["com.google.android.youtube","youtube://","https://m.youtube.com"],spotify:["com.spotify.music","spotify://","https://open.spotify.com"],
+gmail:["com.google.android.gm","googlegmail://","https://mail.google.com"],maps:["com.google.android.apps.maps","comgooglemaps://","https://maps.google.com"],
+chrome:["com.android.chrome","googlechrome://","https://www.google.com"],google:["com.google.android.googlequicksearchbox","googleapp://","https://www.google.com"],
+telegram:["org.telegram.messenger","tg://","https://web.telegram.org"],facebook:["com.facebook.katana","fb://","https://m.facebook.com"],
+twitter:["com.twitter.android","twitter://","https://x.com"],snapchat:["com.snapchat.android","snapchat://","https://www.snapchat.com"],
+netflix:["com.netflix.mediaclient","nflx://","https://www.netflix.com"],linkedin:["com.linkedin.android","linkedin://","https://www.linkedin.com"],
+discord:["com.discord","discord://","https://discord.com/app"],amazon:["in.amazon.mShop.android.shopping","amazon://","https://www.amazon.in"],
+flipkart:["com.flipkart.android","flipkart://","https://www.flipkart.com"],photos:["com.google.android.apps.photos","googlephotos://","https://photos.google.com"],
+drive:["com.google.android.apps.docs","googledrive://","https://drive.google.com"],calendar:["com.google.android.calendar","calshow://","https://calendar.google.com"],
+clock:["com.google.android.deskclock","clock-alarm://","https://www.google.com/search?q=clock"],calculator:["com.google.android.calculator","calc://","https://www.google.com/search?q=calculator"],
+phonepe:["com.phonepe.app","phonepe://","https://www.phonepe.com"],gpay:["com.google.android.apps.nbu.paisa.user","tez://","https://pay.google.com"],
+paytm:["net.one97.paytm","paytmmp://","https://paytm.com"],zomato:["com.application.zomato","zomato://","https://www.zomato.com"],
+swiggy:["in.swiggy.android","swiggy://","https://www.swiggy.com"],uber:["com.ubercab","uber://","https://m.uber.com"],
+ola:["com.olacabs.customer","olacabs://","https://www.olacabs.com"],playstore:["com.android.vending","itms-apps://","https://play.google.com"]};
+const ALIAS={"you tube":"youtube","insta":"instagram","whats app":"whatsapp","google maps":"maps","x":"twitter","gmail app":"gmail","google photos":"photos","google drive":"drive","google pay":"gpay","play store":"playstore","app store":"playstore","google chrome":"chrome","browser":"chrome","alarm":"clock","text":"messages","message":"messages","sms":"messages","dialer":"phone"};
+const SPECIAL={camera:["intent:#Intent;action=android.media.action.STILL_IMAGE_CAMERA;end",null],settings:["intent:#Intent;action=android.settings.SETTINGS;end","app-settings:"],phone:["tel:","tel:"],messages:["sms:","sms:"]};
+function customApps(){const o={};(cfg.apps||"").split("\n").forEach(l=>{const i=l.indexOf("=");if(i>0){const n=l.slice(0,i).trim().toLowerCase(),v=l.slice(i+1).trim();if(n&&v)o[n]=v}});return o}
+function appLink(name){
+  name=name.toLowerCase().replace(/^the /,"").replace(/ (app|application)$/,"").trim();
+  const key=ALIAS[name]||name,c=customApps()[name]||customApps()[key];
+  const launch=(pkg,fb)=>"intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package="+pkg+(fb?";S.browser_fallback_url="+encodeURIComponent(fb):"")+";end";
+  if(c){if(/^(intent:|[a-z][a-z0-9+.-]*:\/\/)/i.test(c))return c;if(ANDROID&&/^[a-z]\w*(\.\w+)+$/i.test(c))return launch(c)}
+  if(SPECIAL[key]){const u=ANDROID?SPECIAL[key][0]:IOS?SPECIAL[key][1]:null;if(u)return u}
+  const a=APPS[key];
+  if(a){if(ANDROID)return launch(a[0],a[2]);if(IOS&&a[1])return a[1];return a[2]}
+  return null;
+}
+const enc=encodeURIComponent,pickOne=a=>a[Math.floor(Math.random()*a.length)];
+const greet=()=>{const h=new Date().getHours();return (h<12?"Good morning":h<17?"Good afternoon":"Good evening")+"."};
+const JOKES=["Why do programmers prefer dark mode? Because light attracts bugs.","There are 10 kinds of people: those who understand binary and those who don’t.","I tried to catch some fog earlier. I mist."];
+function saveMem(){mem=mem.slice(-40);ls.set("jv_mem",mem)}
+function saveChats(){
+  let j=JSON.stringify(chats);
+  while(j.length>3500000&&chats.length>1){chats.pop();j=JSON.stringify(chats)}
+  try{localStorage.setItem("jv_chats",j)}catch(e){}
+}
+function newChat(){cur={id:Date.now(),title:"New chat",ts:Date.now(),msgs:[]};hist=[];ls.set("jv_hist",hist);$("log").innerHTML=""}
+function openChat(c){
+  cur=c;chats=[c].concat(chats.filter(z=>z!==c));$("log").innerHTML="";c.msgs.forEach(m=>bubble(m.r,m.t));
+  hist=c.msgs.slice(-12).map(m=>({role:m.r==="me"?"user":"assistant",content:m.t}));while(hist.length&&hist[0].role!=="user")hist.shift();
+  ls.set("jv_hist",hist);saveChats();$("hsheet").classList.remove("on");document.body.classList.add("chat");paint();
+}
+function renderHist(){
+  const q=($("hq").value||"").toLowerCase(),L=$("hl");L.innerHTML="";
+  chats.filter(c=>c.msgs.length&&(!q||c.title.toLowerCase().includes(q)||c.msgs.some(m=>m.t.toLowerCase().includes(q)))).forEach(c=>{
+    const d=document.createElement("div");d.className="hi";
+    const b=document.createElement("button");b.className="hb";b.textContent=c.title+" · "+new Date(c.ts).toLocaleDateString([],{day:"numeric",month:"short"})+" · "+c.msgs.length+" msgs";b.onclick=()=>openChat(c);
+    const x=document.createElement("button");x.className="hx";x.textContent="✕";x.setAttribute("aria-label","Delete chat");x.onclick=()=>{chats=chats.filter(z=>z!==c);if(cur===c)newChat();saveChats();renderHist()};
+    d.append(b,x);L.appendChild(d);
+  });
+  if(!L.children.length)L.textContent="No chats found.";
+}
+function recall(q){
+  const words=q.toLowerCase().match(/[a-z0-9]{4,}/g);if(!words)return "";
+  const set=new Set(words),hits=[];
+  for(const c of chats){if(c===cur)continue;for(let i=0;i<c.msgs.length;i++){const m=c.msgs[i];if(m.r!=="me")continue;
+    let sc=0;for(const w of (m.t.toLowerCase().match(/[a-z0-9]{4,}/g)||[]))if(set.has(w))sc++;
+    if(sc>=2||(sc>=1&&words.length<=2))hits.push({sc,c,i})}}
+  hits.sort((a,b)=>b.sc-a.sc);
+  return hits.slice(0,3).map(h=>{const m=h.c.msgs[h.i],a=h.c.msgs[h.i+1];return "On "+new Date(h.c.ts).toLocaleDateString()+" the user said: "+m.t.slice(0,160)+(a&&a.r==="ai"?" | you answered: "+a.t.slice(0,200):"")}).join("\n");
+}
+function isStudy(q){return /\b(solve|calculate|compute|evaluate|prove|derive|integrate|differentiate|derivative|integral|limit|equation|probability|matrix|determinant|vector|projectile|velocity|acceleration|momentum|torque|circuit|resistance|capacitor|voltage|magnetic|optics|lens|thermodynamic|entropy|molarity|molality|equilibrium|oxidation|mechanism|organic|jee|neet|sin|cos|tan|log|quadratic|polynomial|ellipse|parabola|hyperbola|complex number|series|sequence)\b/i.test(q)||(q.length>90&&/[=\d]/.test(q))}
+function alt(h){const o=[];for(const m of h){const r=m.role==="user"?"user":"model";if(o.length&&o[o.length-1].role===r)o[o.length-1].parts[0].text+="\n"+m.content;else o.push({role:r,parts:[{text:m.content}]})}return o}
+const STUDY="You are Jarvis, an expert JEE Main and JEE Advanced tutor for Physics, Chemistry and Mathematics. Solve the problem step by step: list the given data, name the concepts and formulas used, then do the calculation. Re-check arithmetic, units and signs before answering. If data is missing or the question is ambiguous, state your assumption. Use LaTeX for maths: $...$ inline and $$...$$ for display equations. Do not use markdown headers, bold or bullet symbols; number the steps 1., 2., 3. End with one last line that starts with FINAL: followed by the final answer in one short plain-spoken sentence with no LaTeX.";
+const CHAT="You are Jarvis, a calm, witty British voice assistant. Reply in one to three short spoken sentences. No markdown, no lists. Occasionally address the user as sir.";
+async function askAI(q,img){
+  const key=cfg.key,study=cfg.study==="on"||(cfg.study!=="off"&&(!!img||isStudy(q)));
+  hist.push({role:"user",content:(img?"[photo] ":"")+q});hist=hist.slice(-12);while(hist.length&&hist[0].role!=="user")hist.shift();
+  const rc=recall(q),dg=/\b(previous|earlier|yesterday|last time|before|history|talked about|discussed)\b/i.test(q)?"\nUser’s recent conversations: "+chats.filter(c=>c.msgs.length).slice(0,6).map(c=>new Date(c.ts).toLocaleDateString()+": "+c.title).join("; "):"";
+  const sys=(study?STUDY:CHAT)+" Today is "+new Date().toDateString()+"."+(cfg.pers?" About the user and how they want replies: "+cfg.pers:"")+(mem.length?" Things the user asked you to remember: "+mem.join("; ")+".":"")+(rc?"\nPossibly relevant snippets from earlier conversations (use only if helpful):\n"+rc:"")+dg;
+  try{
+    let a="";
+    if(key.startsWith("AIza")){
+      const contents=alt(hist);
+      if(img)contents[contents.length-1].parts.push({inlineData:{mimeType:"image/jpeg",data:img.split(",")[1]}});
+      const body=JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents,generationConfig:{maxOutputTokens:study?8000:600}});
+      const chain=cfg.model?[cfg.model]:study?["gemini-pro-latest","gemini-3.5-flash","gemini-flash-latest"]:["gemini-flash-lite-latest","gemini-flash-latest","gemini-3.5-flash"];
+      let r,d;
+      for(const mo of chain){
+        r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+mo+":generateContent",{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":key},body});
+        d=await r.json();if(![404,429,403].includes(r.status))break;
+      }
+      if(!r.ok){hist.pop();return "Gemini says: "+((d.error&&d.error.message)||r.status)}
+      const c=d.candidates&&d.candidates[0];
+      a=c&&c.content&&c.content.parts?c.content.parts.map(x=>x.text||"").join("").trim():"";
+    }else{
+      const msgs=[{role:"system",content:sys}].concat(hist.slice(0,-1),[{role:"user",content:img?[{type:"text",text:q},{type:"image_url",image_url:{url:img}}]:q}]);
+      const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:cfg.model||(study?"gpt-4o":"gpt-4o-mini"),max_tokens:study?2500:220,messages:msgs})});
+      const d=await r.json();
+      if(!r.ok){hist.pop();return "OpenAI says: "+((d.error&&d.error.message)||r.status)}
+      a=d.choices[0].message.content.trim();
+    }
+    if(!a){hist.pop();return "I got an empty reply. Try again."}
+    hist.push({role:"assistant",content:a.slice(0,3000)});ls.set("jv_hist",hist);
+    if(study){const m=a.match(/FINAL:\s*([^\n]+)\s*$/i);return {t:a.replace(/FINAL:/i,"Final answer:"),s:m?m[1].replace(/[$\\{}]/g,""):"Here is the solution. Check the chat.",study:true}}
+    return a;
+  }catch(e){hist.pop();return "I couldn’t reach the AI service. Check your internet connection."}
+}
+function openNative(k){
+  const nm=k.toLowerCase().replace(/^the /,"").replace(/ (app|application)$/,"").trim(),key=ALIAS[nm]||nm;let ok=false;
+  try{ok=JarvisNative.openApp(key)}catch(e){}
+  if(!ok){const a=APPS[key];if(a)try{ok=JarvisNative.openPackage(a[0])}catch(e){}}
+  return ok?"Opening "+k+".":"I couldn’t find an app called "+k+" on this phone.";
+}
+async function route(q){
+  let m;
+  if(!q)return "I’m listening. Say a command.";
+  if(/^(stop|quiet|shut up|cancel)\b/.test(q)){try{speechSynthesis.cancel()}catch(e){}return "Understood."}
+  if(/^(?:change|make|set|switch|turn)\b.*\b(?:colou?r|orb|theme)\b/.test(q)||/^(?:orb|colou?r|theme) /.test(q)){
+    const w=(q.match(/\b(cyan|blue|gold|yellow|red|purple|violet|green|pink|orange|auto|rainbow)\b/)||[])[1],map={blue:"cyan",yellow:"gold",violet:"purple",rainbow:"auto"},names=Object.keys(THEMES).concat("auto");
+    const n=w?(map[w]||w):names[(names.indexOf(cfg.theme)+1)%names.length];
+    cfg.theme=n;ls.set("jv_cfg",cfg);applyTheme();return "Orb colour set to "+n+"."}
+  if(/^(?:new chat|start (?:a )?new chat|clear chat)/.test(q)){newChat();return "Fresh start."}
+  if(/^(?:show|open) (?:my )?(?:chat )?history/.test(q)){renderHist();$("hsheet").classList.add("on");return "Here are your past chats."}
+  if(m=q.match(/^remember (?:that )?(.+)/)){mem.push(m[1]);saveMem();return "Noted. I’ll remember that."}
+  if(/^forget (everything|all)/.test(q)){mem=[];hist=[];saveMem();ls.set("jv_hist",hist);return "Memory cleared."}
+  if(/what do you remember/.test(q))return mem.length?"I remember: "+mem.join(". ")+".":"I have no saved memories yet.";
+  if(m=q.match(/timer (?:for )?(\d+) ?(second|sec|minute|min|hour)/)){
+    const n=+m[1],u=m[2][0],ms=n*(u==="h"?3600000:u==="m"?60000:1000),w=u==="h"?"hour":u==="m"?"minute":"second";
+    setTimeout(()=>{try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}say("Your "+n+" "+w+" timer is up.")},ms);
+    return "Timer set for "+n+" "+w+(n>1?"s":"")+". Keep this page open.";
+  }
+  if(/battery/.test(q)){try{const b=await navigator.getBattery();return "Battery is at "+Math.round(b.level*100)+" percent"+(b.charging?" and charging.":".")}catch(e){return "This browser doesn’t let me read the battery."}}
+  if(/weather|temperature|rain/.test(q))return {t:"Here’s the latest forecast.",l:"Open weather",u:"https://www.google.com/search?q="+enc(q),go:1};
+  if(/what('s| is) the time|^time\b|what time/.test(q))return "It’s "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+".";
+  if(/what('s| is)( the| today’s| today's)? (date|day)|today’s date|which day/.test(q))return "Today is "+new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long",year:"numeric"})+".";
+  if(m=q.match(/^call (\+?[\d ]{6,})/)){const n=m[1].replace(/ /g,"");return {t:"Calling "+n+".",l:"Call "+n,u:"tel:"+n,go:1}}
+  if(m=q.match(/^(?:navigate|take me|directions?) (?:to )?(.+)/))return {t:"Starting navigation to "+m[1]+".",l:"Open maps",u:"https://www.google.com/maps/dir/?api=1&destination="+enc(m[1]),go:1};
+  if(m=q.match(/^(?:open|launch|start|run) (?:up )?(.+)/)||q.match(/^(.+?) (?:kholo|khol do|kholna|chalao|chalu karo|open karo)$/)){const k=m[1];if(NATIVE)return openNative(k);const u=appLink(k);return u?{t:"Opening "+k+".",l:"Open "+k,u,go:1}:{t:"I don’t know that app yet. Add it under Settings, Custom apps, or I can search the web.",l:"Search "+k,u:"https://www.google.com/search?q="+enc(k)}}
+  if(m=q.match(/^(?:play|watch) (.+)/))return {t:"Playing "+m[1]+" on YouTube.",l:"Open YouTube",u:"https://m.youtube.com/results?search_query="+enc(m[1]),go:1};
+  if(m=q.match(/^(?:search|google|look up) (?:for )?(.+)/))return {t:"Searching for "+m[1]+".",l:"See results",u:"https://www.google.com/search?q="+enc(m[1]),go:1};
+  if(/\bcoin\b|\btoss\b/.test(q))return "It’s "+pickOne(["heads","tails"])+".";
+  if(/\bdice\b|\broll\b/.test(q))return "You rolled a "+(1+Math.floor(Math.random()*6))+".";
+  const e=q.replace(/what['’]s|what is|calculate|equals|\?/g,"").replace(/plus/g,"+").replace(/minus/g,"-").replace(/times|multiplied by|into|\bx\b/g,"*").replace(/divided by|over/g,"/").replace(/,/g,"").trim();
+  if(/^[\d\s+\-*/().%]+$/.test(e)&&/\d/.test(e)&&/[+\-*/%]/.test(e)){try{const v=Function('"use strict";return ('+e+')')();if(isFinite(v))return e+" = "+(+v.toFixed(4))}catch(x){}}
+  const bu=appLink(q);if(bu)return {t:"Opening "+q+".",l:"Open "+q,u:bu,go:1};
+  if(cfg.key)return await askAI(q);
+  if(/^(hi|hello|hey|yo)\b/.test(q))return greet()+" How can I help?";
+  if(/joke/.test(q))return pickOne(JOKES);
+  return {t:"I need an AI key to answer that. Open Settings and add one.",l:"Search “"+q+"”",u:"https://www.google.com/search?q="+enc(q)};
+}
+async function run(raw){
+  const img=pending;pending=null;$("cam").classList.remove("on");$("txt").placeholder="Or type a command";
+  const q=raw.toLowerCase().replace(/[,!?]/g," ").replace(/\.+\s*$/,"").replace(/\s+/g," ").trim().replace(/^(?:(?:hey|ok|okay|hi) )?jarvis ?/,"").replace(/^(?:(?:please|can you|could you|would you|will you|i want to|i wanna|go ahead and) )+/,"").replace(/ (?:please|now|for me)$/,"").trim();
+  $("heard").textContent=raw?"“"+raw+"”":"";
+  const shown=(img?"📷 ":"")+(raw||(img?"Solve this":""));if(shown)addMsg("me",shown);
+  setState("thinking");
+  const res=img?(cfg.key?await askAI(raw||"Solve this problem step by step.",img):"Add a Gemini key in Settings so I can read photos."):await route(q);
+  say(res);
+}
+
+/* mic */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
+function listen(){stopWake();
+  if(NATIVE){if(state==="listening"){try{JarvisNative.stopListening()}catch(e){}return}try{JarvisNative.stopSpeak()}catch(e){}JarvisNative.listen();return}
+  if(state==="listening"&&rec){rec.stop();return}
+  if(!SR){$("reply").textContent="Voice input isn’t supported in this browser. Type a command, or open this page in Chrome.";return}
+  try{
+    speechSynthesis.cancel();rec=new SR();rec.lang="en-IN";rec.interimResults=true;
+    rec.onstart=()=>{setState("listening");$("heard").textContent=""};
+    rec.onresult=e=>{let s="";for(const r of e.results)s+=r[0].transcript;$("heard").textContent=s;if(e.results[e.results.length-1].isFinal){rec.onend=null;run(s)}};
+    rec.onerror=e=>{setState("idle");if(e.error==="not-allowed"||e.error==="service-not-allowed")$("reply").textContent="Microphone is blocked. Allow mic access in your browser settings, then tap again."};
+    rec.onend=()=>{if(state==="listening")setState("idle")};
+    rec.start();
+  }catch(e){setState("idle")}
+}
+$("mic").onclick=listen;cv.onclick=listen;
+function sendTxt(){const v=$("txt").value.trim();$("txt").value="";if(v)run(v)}
+$("txt").addEventListener("keydown",e=>{if(e.key==="Enter")sendTxt()});$("send").onclick=sendTxt;
+["What time is it","Tell me a joke","Open YouTube","Set a timer for 1 minute","Remember that I like short answers","25 times 4"].forEach(c=>{const b=document.createElement("button");b.className="chip";b.textContent=c;b.onclick=()=>run(c);$("chips").appendChild(b)});
+
+/* HUD */
+function tick(){const d=new Date();$("clock").textContent=d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});$("date").textContent=d.toLocaleDateString([],{weekday:"long",day:"numeric",month:"short"})}
+tick();setInterval(tick,1000);
+function net(){const c=navigator.connection;$("net").textContent="Network "+(navigator.onLine?(c&&c.effectiveType?c.effectiveType:"online"):"offline")}
+net();addEventListener("online",net);addEventListener("offline",net);
+try{navigator.getBattery().then(b=>{const u=()=>$("bat").textContent="Battery "+Math.round(b.level*100)+"%"+(b.charging?" ⚡":"");u();b.onlevelchange=b.onchargingchange=u})}catch(e){$("bat").textContent="Battery n/a"}
+function weather(){try{navigator.geolocation.getCurrentPosition(async p=>{try{const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+p.coords.latitude+"&longitude="+p.coords.longitude+"&current=temperature_2m"),d=await r.json();$("wx").textContent="Weather "+Math.round(d.current.temperature_2m)+"°C"}catch(e){}},()=>{},{timeout:8000})}catch(e){}}
+
+/* boot */
+$("go").onclick=async()=>{
+  $("go").style.display="none";sfx.boot();
+  const L=["Initializing core systems","Loading voice module","Linking neural network","Calibrating interface","All systems online"];
+  for(const l of L){const d=document.createElement("div");d.textContent="✓ "+l;$("bl").appendChild(d);await sleep(450)}
+  await sleep(300);$("boot").classList.add("off");pwT=1;weather();
+  await sleep(700);say(greet()+" Jarvis online. How can I help?");
+};
+
+/* toggles + wake word */
+let wake=false,wrec=null;
+function paint(){$("wk").textContent="Wake: "+(wake?"on":"off");$("wk").classList.toggle("on",wake);$("mute").textContent="Voice: "+(cfg.mute?"off":"on");$("mute").classList.toggle("on",!cfg.mute);$("chat").classList.toggle("on",document.body.classList.contains("chat"))}
+$("chat").onclick=()=>{document.body.classList.toggle("chat");paint();size();$("log").scrollTop=1e9};
+$("mute").onclick=()=>{cfg.mute=!cfg.mute;ls.set("jv_cfg",cfg);if(cfg.mute){try{speechSynthesis.cancel()}catch(e){}}paint()};
+function stopWake(){if(wrec){const w=wrec;wrec=null;w.onend=null;w.onresult=null;try{w.stop()}catch(e){}}}
+function startWake(){
+  if(!wake||!SR||wrec)return;
+  try{
+    const w=new SR();wrec=w;w.lang="en-IN";w.continuous=true;w.interimResults=true;
+    w.onresult=e=>{
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(!e.results[i].isFinal)continue;
+        const m=e.results[i][0].transcript.toLowerCase().match(/\b(?:hey|hi|ok|okay)[,.]?\s*(?:jarvis|jarwis|jarvas|jarves)\b(.*)/);
+        if(m){const rest=m[1].replace(/^[\s,.]+/,"").trim();stopWake();if(rest.length>2)run(rest);else say("Yes, sir?",listen);return}
+      }
+    };
+    w.onerror=e=>{if(wrec===w)wrec=null;if(e.error==="not-allowed"||e.error==="service-not-allowed"){wake=false;paint();$("reply").textContent="Microphone is blocked, so wake word can’t run."}};
+    w.onend=()=>{if(wrec===w)wrec=null;if(wake)setTimeout(startWake,300)};
+    w.start();
+  }catch(e){wrec=null}
+}
+$("wk").onclick=()=>{
+  if(NATIVE){$("reply").textContent="Wake word comes in the next app stage.";return}
+  if(!SR){$("reply").textContent="Wake word needs Chrome on Android or desktop.";return}
+  wake=!wake;
+  if(wake){startWake();$("reply").textContent="Wake word on. Say “Hey Jarvis” while this page is open.";sfx.on()}else stopWake();
+  paint();
+};
+setInterval(()=>{if(wake&&!wrec&&state==="idle"&&!(window.speechSynthesis&&speechSynthesis.speaking))startWake()},2000);
+paint();
+
+/* settings */
+function fillVoices(){const s=$("v");s.innerHTML="";speechSynthesis.getVoices().filter(x=>/^en/i.test(x.lang)).forEach(x=>{const o=document.createElement("option");o.value=x.name;o.textContent=x.name+" ("+x.lang+")";if(x.name===cfg.voice)o.selected=true;s.appendChild(o)})}
+$("gear").onclick=()=>{$("k").value=cfg.key;$("p").value=cfg.pitch;$("s").value=cfg.rate;$("pers").value=cfg.pers;$("mdl").value=cfg.model||"";$("study").value=cfg.study||"auto";$("apps").value=cfg.apps||"";try{fillVoices()}catch(e){}$("sheet").classList.add("on")};
+$("cls").onclick=()=>$("sheet").classList.remove("on");
+$("save").onclick=()=>{Object.assign(cfg,{key:$("k").value.trim(),model:$("mdl").value.trim(),study:$("study").value,apps:$("apps").value,voice:$("v").value||cfg.voice,pitch:+$("p").value,rate:+$("s").value,pers:$("pers").value.trim()});paint();ls.set("jv_cfg",cfg);$("sheet").classList.remove("on");say("Settings saved, sir.")};
+$("exp").onclick=async()=>{const j=JSON.stringify({mem,pers:cfg.pers});try{await navigator.clipboard.writeText(j);alert("Memory copied. Paste it into a note to keep a backup.")}catch(e){prompt("Copy this backup:",j)}};
+$("imp").onclick=()=>{const v=prompt("Paste your memory backup:");if(!v)return;try{const d=JSON.parse(v);if(Array.isArray(d.mem)){mem=d.mem;saveMem()}if(d.pers){cfg.pers=d.pers;ls.set("jv_cfg",cfg);$("pers").value=d.pers}alert("Memory imported.")}catch(e){alert("That backup couldn’t be read.")}};
+$("clr").onclick=()=>{if(confirm("Delete all saved memory and chat history?")){mem=[];hist=[];saveMem();ls.set("jv_hist",hist)}};
+window.onNative=(ty,tx)=>{
+  if(ty==="start"){setState("listening");$("heard").textContent=""}
+  else if(ty==="partial")$("heard").textContent=tx;
+  else if(ty==="final")run(tx);
+  else if(ty==="end"){if(state==="listening")setState("idle")}
+  else if(ty==="spoke"){setState("idle");const c=spokeCb;spokeCb=null;c&&c()}
+  else if(ty==="error"){if(state==="listening")setState("idle");
+    if(tx==="permission")$("reply").textContent="Microphone permission is needed. Allow it in Android app settings.";
+    else if(tx==="unavailable")$("reply").textContent="Speech recognition isn’t available on this phone. Enable Google speech services."}
+};
+applyTheme();
+if(chats.length&&Date.now()-chats[0].ts<216e5){cur=chats[0];cur.msgs.forEach(m=>bubble(m.r,m.t))}
+$("cam").onclick=()=>$("file").click();
+$("file").onchange=e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  const im=new Image(),u=URL.createObjectURL(f);
+  im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height);pending=c.toDataURL("image/jpeg",.85);URL.revokeObjectURL(u);
+    $("txt").placeholder="Photo attached. Add a question or tap send";$("reply").textContent="Photo ready. Tap send to solve it, or ask a question about it.";$("cam").classList.add("on")};
+  im.src=u;
+};
+$("hbtn").onclick=()=>{renderHist();$("hsheet").classList.add("on")};
+$("hq").oninput=renderHist;
+$("hcls").onclick=()=>$("hsheet").classList.remove("on");
+$("hnew").onclick=()=>{newChat();$("hsheet").classList.remove("on");paint()};
+$("hdel").onclick=()=>{if(confirm("Delete ALL saved chats?")){chats=[];newChat();saveChats();renderHist()}};
+$("hexp").onclick=async()=>{const j=JSON.stringify(chats);try{await navigator.clipboard.writeText(j);alert("All chats copied. Paste them into a note to back them up.")}catch(e){prompt("Copy this backup:",j)}};
+{const box=$("sw");Object.keys(THEMES).concat("auto").forEach(n=>{const b=document.createElement("button");b.className="swb";b.setAttribute("aria-label",n+" orb");b.style.background=n==="auto"?"conic-gradient(red,yellow,lime,cyan,blue,magenta,red)":"rgb("+THEMES[n]+")";b.onclick=()=>{cfg.theme=n;ls.set("jv_cfg",cfg);applyTheme()};box.appendChild(b)})}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
