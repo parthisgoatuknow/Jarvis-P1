@@ -1,0 +1,30 @@
+name: Build Jarvis APK
+on:
+  workflow_dispatch:
+  push:
+    paths: ['jarvis-app.zip']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q jarvis-app.zip -d app-src
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Build APK
+        working-directory: app-src/jarvis-app
+        env:
+          JARVIS_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: gradle assembleDebug --no-daemon
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: Jarvis APK ${{ github.run_number }}
+          files: app-src/jarvis-app/app/build/outputs/apk/debug/app-debug.apk
