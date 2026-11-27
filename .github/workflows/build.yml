@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths: ['jarvis-app.zip']
+
 permissions:
   contents: write
 jobs:
